@@ -1,0 +1,27 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35017.193
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TypingSpeedTest", "TypingSpeedTest\TypingSpeedTest.csproj", "{EBE14FC1-BAD5-4E2E-ADE2-9B77AB7D63D6}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{EBE14FC1-BAD5-4E2E-ADE2-9B77AB7D63D6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EBE14FC1-BAD5-4E2E-ADE2-9B77AB7D63D6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EBE14FC1-BAD5-4E2E-ADE2-9B77AB7D63D6}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{EBE14FC1-BAD5-4E2E-ADE2-9B77AB7D63D6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EBE14FC1-BAD5-4E2E-ADE2-9B77AB7D63D6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EBE14FC1-BAD5-4E2E-ADE2-9B77AB7D63D6}.Release|Any CPU.Deploy.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {22278478-1920-4648-8D37-1023FF6DDB7A}
+	EndGlobalSection
+EndGlobal

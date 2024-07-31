@@ -1,0 +1,130 @@
+﻿@page "/practicetyping"
+@using System.Timers
+
+<h2 class="welcome-message">Practice Mode</h2>
+
+<p @ref="focuspoint" tabindex="0" @onkeydown="HandleKeyDown" class="=typing-paragraph">
+    @for (int i = 0; i < targetString.Length; i++)
+    {
+        if (i < wholeString.Length)
+        {
+            if (wholeString[i] == targetString[i])
+            {
+                <span class="correct-char">@wholeString[i]</span>
+            }
+            else
+            {
+                <span class="wrong-char">@wholeString[i]</span>
+            }
+        }
+        else
+        {
+            <span class="default-char">@targetString[i]</span>
+        }
+    }
+</p>
+
+@if (state == 1)
+{
+    <div class="screen">
+        @if (float.Parse(wordPerMinute) >= 50 && float.Parse(accuracy) >= 90)
+        {
+            <p>Wow! your average WPM is @wordPerMinute with @accuracy % accuracy! Keep up the good work.</p>
+        }
+        else
+        {
+            <p>Your average WPM is @wordPerMinute with @accuracy % accuracy. You could do better!</p>
+        }
+        <button class="restart-button" @onclick="Restart">Click me to restart!</button>
+    </div>
+}
+
+
+<span class="info-container">
+    <p>Accuracy: @accuracy %</p>
+    <p>WPM: @wordPerMinute</p>
+    <p>Elapsed time: @currentTime s</p>
+</span>
+
+
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await focuspoint.FocusAsync();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        targetString = db.GetRandomParagraph(0);
+        typeTimer = new System.Timers.Timer();
+        typeTimer.Interval = 1000;
+        typeTimer.Elapsed += async (object? sender, ElapsedEventArgs e) =>
+        {
+            if (flag == 1 && state == 0)
+            {
+                currentTime++;
+                wordPerMinute = typingBase.CheckTypingSpeed(totalCount, wrongCount, currentTime);
+            }
+            await InvokeAsync(StateHasChanged);
+        };
+        typeTimer.Enabled = true;
+    }
+
+    private int currentTime = 0, flag = 0;
+    private System.Timers.Timer typeTimer;
+    private string wordPerMinute = "0";
+    DatabaseConnection db = new DatabaseConnection();
+    TypingBaseClass typingBase = new TypingBaseClass();
+    private string targetString = "Hello, world";
+
+    private ElementReference focuspoint;
+    private string pressedKey = "";
+    private string wholeString = "";
+    private int wrongCount = 0, totalCount = 0, ptr = -1, state = 0;
+    private string accuracy = "0";
+
+    private void HandleKeyDown(KeyboardEventArgs e)
+    {
+        flag = 1; // activate the timer when something is pressed
+        pressedKey = e.Key;
+
+        if (pressedKey == "Backspace" && state == 0)
+        {
+            if (wholeString.Length > 0)
+            {
+                wholeString = wholeString.Substring(0, wholeString.Length - 1);
+                ptr--;
+            }
+        }
+        else if (pressedKey.Length == 1 && state == 0)
+        {
+            totalCount++;
+            ptr++;
+            wholeString += pressedKey;
+
+            if (ptr <= targetString.Length - 1 && typingBase.CheckString(wholeString, targetString, ptr) is false)
+            {
+                wrongCount++;
+            }
+        }
+
+        if (ptr == targetString.Length - 1) state = 1;
+
+        if (totalCount > 0) accuracy = typingBase.CheckAccuracy(totalCount, wrongCount);
+    }
+
+
+    private void Restart()
+    {
+        state = 0;
+        wrongCount = 0;
+        totalCount = 0;
+        ptr = -1;
+        currentTime = 0;
+        flag = 0;
+        wordPerMinute = "0";
+        wholeString = "";
+        accuracy = "0";
+        targetString = db.GetRandomParagraph(0);
+    }
+}

@@ -1,0 +1,13 @@
+﻿@page "/"
+@inject NavigationManager Navigation
+
+<h2 class="welcome-message">Welcome to speed typing test!</h2>
+
+<button class="weird-button" @onclick="ButtonClicked">Don't click me</button>
+
+@code {
+    private void ButtonClicked()
+    {
+        Navigation.NavigateTo("https://www.youtube.com/watch?v=xvFZjo5PgG0");
+    }
+}

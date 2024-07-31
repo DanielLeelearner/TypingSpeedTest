@@ -1,0 +1,197 @@
+﻿@page "/contest"
+
+@using System.Timers
+
+<h2 class="welcome-message">Contest Mode</h2>
+
+<p @ref="focuspoint" tabindex="0" @onkeydown="HandleKeyDown" class="typing-paragraph">
+    @for (int i = 0; i < targetString.Length; i++)
+    {
+        if (i < wholeString.Length)
+        {
+            if (wholeString[i] == targetString[i])
+            {
+                <span class="correct-char">@wholeString[i]</span>
+            }
+            else
+            {
+                <span class="wrong-char">@wholeString[i]</span>
+            }
+        }
+        else
+        {
+            <span class="default-char">@targetString[i]</span>
+        }
+    }
+</p>
+
+@if (state == 1)
+{
+    <div class="screen">
+        @if (pageNumber >= 10 && float.Parse(accuracy) >= 85 && float.Parse(wordPerMinute) >= 40)
+        {
+            <p>Wow! Your result looks good! Do you want to submit your result?</p>
+            <input @ref="inputField" tabindex="0" class="name-input" @bind="playerName" maxlength="50" />
+            <button class="leaderboard-button" @onclick="() => AddLeaderBoard(playerName, float.Parse(accuracy), float.Parse(wordPerMinute), pageNumber)"> Submit! </button>
+        }
+        else
+        {
+            <p>Your average WPM is @wordPerMinute with @accuracy % accuracy. You could do better!</p>
+        }
+        <button class="restart-button" @onclick="Restart">Click me to restart!</button>
+    </div>
+}
+
+<div class="hp-bar">
+    <div class="hp-level" style="width: @currentHP%"></div>
+</div>
+
+<span class="info-container">
+    <p>Accuracy: @accuracy %</p>
+    <p>WPM: @wordPerMinute</p>
+    <p>Page Number: @pageNumber</p>
+</span>
+
+@code {
+    private int currentTime = 0, flag = 0, pageNumber = 0, hpCycle = 5, currCycle = 0;
+    private System.Timers.Timer typeTimer;
+    private string wordPerMinute = "0";
+    DatabaseConnection db = new DatabaseConnection();
+    TypingBaseClass typingBase = new TypingBaseClass();
+    private string targetString = "Hello, world";
+    private int currentHP = 100;
+    private int currentDifficulty = 1;
+    private string playerName = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        targetString = db.GetRandomParagraph(currentDifficulty);
+        typeTimer = new System.Timers.Timer();
+        typeTimer.Interval = 1000;
+        typeTimer.Elapsed += async (object? sender, ElapsedEventArgs e) =>
+        {
+            if (flag == 1 && state == 0)
+            {
+                if (currentHP <= 0) {
+                    state = 1;
+                    currentHP = 0;
+                }
+                currentTime++;
+                currCycle++;
+                if (currCycle >= hpCycle)
+                {
+                    currCycle = 0;
+                    currentHP -= 1 * dropRatio;
+                }
+                wordPerMinute = typingBase.CheckTypingSpeed(totalCount, wrongCount, currentTime);
+            }
+            await InvokeAsync(StateHasChanged);
+        };
+        typeTimer.Enabled = true;
+    }
+
+    private ElementReference focuspoint;
+    private ElementReference inputField;
+    private string pressedKey = "";
+    private string wholeString = "";
+    private int wrongCount = 0, totalCount = 0, ptr = -1, state = 0, dropRatio = 1;
+    private string accuracy = "0";
+
+    private void HandleKeyDown(KeyboardEventArgs e)
+    {
+        flag = 1; // activate the timer when something is pressed
+        pressedKey = e.Key;
+        if (currentHP <= 0)
+        {
+            state = 1;
+            currentHP = 0;
+        }
+
+        if (pressedKey == "Backspace" && state == 0)
+        {
+            if (wholeString.Length > 0)
+            {
+                wholeString = wholeString.Substring(0, wholeString.Length - 1);
+                ptr--;
+            }
+        }
+        else if (pressedKey.Length == 1 && state == 0)
+        {
+            totalCount++;
+            ptr++;
+            wholeString += pressedKey;
+
+            if (ptr <= targetString.Length - 1 && typingBase.CheckString(wholeString, targetString, ptr) is false)
+            {
+                //punishment
+                wrongCount++;
+                if (wrongCount % 40 == 0) dropRatio++;
+                currCycle += 2;
+            }
+        }
+
+        if (ptr == targetString.Length - 1) UpdatePage();
+
+        if (totalCount > 0) accuracy = typingBase.CheckAccuracy(totalCount, wrongCount);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (state == 0) await focuspoint.FocusAsync();
+    }
+
+    private string UpdatePage()
+    {
+        if (pageNumber != 0 && pageNumber % 5 == 0)
+        {
+            currentHP = 100;
+
+            if (hpCycle > 1)
+            {
+                hpCycle--;
+            }
+            else
+            {
+                dropRatio++;
+            }
+
+            if (currentDifficulty < 3) currentDifficulty++;
+        }
+        else 
+        {
+            currentHP = Math.Min(100, currentHP + 5);
+        }
+        ptr = -1;
+        pageNumber++;
+        currCycle = 0;
+        wholeString = "";
+        targetString = db.GetRandomParagraph(currentDifficulty);
+        return targetString;
+    }
+
+    private void Restart()
+    {
+        state = 0;
+        wrongCount = 0;
+        totalCount = 0;
+        ptr = -1;
+        currentTime = 0;
+        flag = 0;
+        wordPerMinute = "0";
+        wholeString = "";
+        accuracy = "0";
+        pageNumber = 0;
+        hpCycle = 5;
+        currCycle = 0;
+        currentHP = 100;
+        currentDifficulty = 1;
+        dropRatio = 1;
+        targetString = db.GetRandomParagraph(currentDifficulty);
+    }
+
+    private void AddLeaderBoard(string name, float accuracy, float wpm, int page)
+    {
+        db.AddSubmission(name, accuracy, wpm, page);
+        Restart();
+    }
+}

@@ -1,0 +1,41 @@
+﻿@page "/leaderboard"
+
+<h2 class="welcome-message">Leader Board🏆🏆🏆</h2>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Rank</th>
+            <th>Name</th>
+            <th>Accuracy</th>
+            <th>WPM</th>
+            <th>Page</th>
+            <th>Submission Time</th>
+        </tr>
+    </thead>
+    <tbody>
+        @for(int i = 1; i <= leaders.Count(); i++)
+        {
+            <tr>
+                <td>@i</td>
+                <td>@leaders[i - 1].GetName()</td>
+                <td>@leaders[i - 1].GetAccuracy()</td>
+                <td>@leaders[i - 1].GetWpm()</td>
+                <td>@leaders[i - 1].GetPage()</td>
+                <td>@leaders[i - 1].GetSubmissionDate()</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private DatabaseConnection db = new DatabaseConnection();
+    private List<Record> leaders = new List<Record>();
+    protected override async Task OnInitializedAsync()
+    {
+        leaders = db.GetLeaderBoard();
+        
+    }
+
+
+}
